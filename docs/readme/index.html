@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
     <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
     <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96">
-    <link rel="stylesheet" type="text/css" href="css/page.css?v=2023-04-15T21%3A02%3A58.936Z">
+    <link rel="stylesheet" type="text/css" href="css/page.css?v=2023-05-25T06%3A58%3A21.321Z">
   </head>
 
   <body>
@@ -80,6 +80,40 @@
           </p>
         </div>
         <h2 id="implementationdetails">Implementation details</h2>
+        <p>This project uses both the rasterizer and ray tracing:</p>
+        <ul>
+          <li>the rasterizer is used to determine where the ray coming from the camera enters the diamond, as well as the surface normal at this point</li>
+          <li>then ray tracing is used to compute the trajectory of the ray inside the gem.</li>
+        </ul>
+        <p>This project is made of 4 main parts:</p>
+        <ul>
+          <li>modeling the diamond</li>
+          <li>detection of intersections between the light ray and the surface of the diamond. This needs to be efficient because it will be performed at most 20 times per fragment, since the ray bounces from facet to facet</li>
+          <li>simulating the behaviour of light using laws of geometrical optics</li>
+          <li>a bit of post-processing</li>
+        </ul>
+        <h3 id="modelingandraytracing">Modeling and ray tracing</h3>
+        <p>The base operation in ray tracing is to detect collisions between light rays and geometry (triangles).
+          In this scene, it is critical because each light ray (fragment) will possibly be refracted/reflected dozens of time.</p>
+        <p>A ray intersects a triangle if and only if:</p>
+        <ul>
+          <li>an intersection point exists that is both on the trajectory of the ray, and the plane of the triangle</li>
+          <li>this point is inside the triangle, between its 3 vertices. To test this, a triple dot product can be used to check that the point is on the same side of all 3 edges.</li>
+        </ul>
+        <p>In this project, checking that the intersection is within the triangles would be too expensive. As an optimization, it is possible to skip this part if I limit myself to convex shapes. I can then define the diamond as the intersection of all the half-spaces formed by the facets. This is very handy because:</p>
+        <ul>
+          <li>computing the intersection with a plane is way less expensive</li>
+          <li>a typical diamond is made of 176 triangles but only 89 facets.</li>
+        </ul>
+        <p>It turns out this limitation is not a problem at all because most diamonds are convex.</p>
+        <div style="text-align:center">
+          <img alt="Diagram of diamond modeling" src="https://github.com/piellardj/diamond-webgl/raw/main/src/readme/diamond_as_halfplanes.png" />
+          <p>
+            <i>A diamond can be seen as the intersection of many half-spaces.</i>
+          </p>
+        </div>
+        <p>The intersection is then seen as the equations:</p>
+        <p><img src="https://github.com/piellardj/diamond-webgl/raw/main/src/readme/formula_intersection.png" alt="Formula of ray-plane intersection" /></p>
         <h3 id="geometricaloptics">Geometrical optics</h3>
         <p>The behaviour of light rays as they go through the diamond can be described by a few simple rules.</p>
         <h4 id="refractiveindex">Refractive index</h4>
